@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.intern.kanban.history.dao.MovedInfoDao">
+
+    <select id="createTable">
+        create table if not exists move_info (
+        movedInfoId BIGINT NOT NULL Auto_increment primary key,
+        loggedEventId BIGINT NOT NULL,
+        beforeBoardTitle varchar(100) NOT NULL,
+        afterBoardTitle varchar(100) NOT NULL );
+    </select>
+
+    <insert id="insert" parameterType="MovedInfo" useGeneratedKeys="true" keyProperty="movedInfoId">
+        INSERT INTO move_info ( loggedEventId, beforeBoardTitle, afterBoardTitle)
+        VALUES( #{loggedEventId}, #{beforeBoardTitle}, #{afterBoardTitle})
+    </insert>
+
+
+</mapper>

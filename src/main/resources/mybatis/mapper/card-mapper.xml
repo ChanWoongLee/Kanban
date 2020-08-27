@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.intern.kanban.card.dao.CardDAO">
+
+    <!--테스트용 테이블 생성(변경 해야함)-->
+    <select id="createTable">
+        CREATE TABLE IF NOT EXISTS card (
+        cardId BIGINT NOT NULL AUTO_INCREMENT,
+        author VARCHAR(100) NOT NULL,
+        title VARCHAR(100) NOT NULL,
+        content MEDIUMTEXT,
+        boardId BIGINT NOT NULL,
+        prevCardId BIGINT NOT NULL,
+        createdDate DATETIME NOT NULL,
+        versionNum BIGINT NOT NULL,
+        PRIMARY KEY (cardId)
+        )
+    </select>
+
+    <insert id="insert" parameterType="Card" useGeneratedKeys="true" keyProperty="cardId">
+        INSERT INTO card ( author, title, content, boardId, prevCardId, createdDate, versionNum )
+        VALUES ( #{author}, #{title}, #{content}, #{boardId}, #{prevCardId}, #{createdDate}, #{versionNum} )
+    </insert>
+
+    <select id="selectById" resultType="Card">
+        SELECT *
+        FROM card
+        WHERE cardId = #{cardId}
+    </select>
+
+    <select id="selectByBoardId" parameterType="long" resultType="Card">
+        SELECT *
+        FROM card
+        WHERE boardId = #{boardId}
+    </select>
+
+    <select id="countByBoardId" parameterType="long" resultType="long">
+        SELECT COUNT(*)
+        FROM card
+        WHERE boardId = #{boardId}
+    </select>
+
+    <select id="selectFirstByBoardId" parameterType="long" resultType="Card">
+        SELECT *
+        FROM card
+        WHERE boardId = #{boardId} AND prevCardId = 0
+    </select>
+
+    <select id="selectByPrevCardId" parameterType="map" resultType="Card">
+        SELECT *
+        FROM card
+        WHERE prevCardId = #{prevCardId} AND boardId = #{boardId}
+    </select>
+
+    <select id="selectByBoardIdForPaging" parameterType="map" resultType="BasicCardInfo">
+        WITH RECURSIVE cte ( cardId, title, author ) as (
+        SELECT cardId, title, author
+        FROM card
+        WHERE prevCardId = #{offset} AND boardId = #{boardId}
+        UNION ALL
+        SELECT c.cardId, c.title, c.author
+        FROM card AS c
+        INNER JOIN cte ON c.prevCardId = cte.cardId
+        )
+        SELECT * FROM cte LIMIT #{limit} OFFSET 0
+    </select>
+
+    <select id="selectStartLossPoint" parameterType="long" resultType="Card">
+        SELECT *
+        FROM card
+        WHERE boardId = #{boardId} AND cardId NOT IN (SELECT prevCardId FROM card);
+    </select>
+
+    <select id="selectEndLossPoint" parameterType="long" resultType="Card">
+        SELECT *
+        FROM card
+        WHERE prevCardId != 0 AND boardId = #{boardId} AND prevCardId NOT IN (SELECT cardId FROM card);
+    </select>
+
+    <select id="countByRecursive" parameterType="long" resultType="long">
+        WITH RECURSIVE cte ( cardId ) as (
+        SELECT cardId
+        FROM card
+        WHERE prevCardId = 0 AND boardId = #{boardId}
+        UNION ALL
+        SELECT c.cardId
+        FROM card AS c
+        INNER JOIN cte ON c.prevCardId = cte.cardId
+        )
+        SELECT COUNT(*) FROM cte
+    </select>
+
+    <update id="updateBoardId" parameterType="map">
+        UPDATE card
+        SET boardId = #{boardId}
+        WHERE cardId = #{cardId}
+    </update>
+
+    <update id="updatePrevCardId" parameterType="map">
+        UPDATE card
+        SET prevCardId = #{prevCardId}
+        WHERE cardId = #{cardId}
+    </update>
+
+    <update id="updateCardInfo" parameterType="map">
+        UPDATE card
+        SET content = #{content}, versionNum = #{versionNum}
+        WHERE cardId = #{cardId}
+    </update>
+
+    <update id="updateVersion" parameterType="map">
+        UPDATE card
+        SET versionNum = #{versionNum}, title = #{title}, content = #{content}
+        WHERE cardId = #{cardId}
+    </update>
+
+    <select id="dropTable">
+        DROP TABLE card
+    </select>
+
+    <delete id="deleteById" parameterType="long">
+        DELETE
+        FROM card
+        WHERE cardId = #{cardId}
+    </delete>
+
+    <select id="deleteCardRecord">
+        DELETE FROM card
+    </select>
+
+</mapper>

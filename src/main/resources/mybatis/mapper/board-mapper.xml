@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.intern.kanban.board.dao.BoardDAO">
+
+    <select id="createTable">
+        CREATE TABLE IF NOT EXISTS board (
+        boardId BIGINT NOT NULL AUTO_INCREMENT,
+        status VARCHAR(100) NOT NULL,
+        prevBoardId BIGINT NOT NULL,
+        PRIMARY KEY (boardId)
+        )
+    </select>
+
+    <insert id="insert" parameterType="Board" useGeneratedKeys="true" keyProperty="boardId">
+        INSERT INTO board (status, prevBoardId)
+        VALUES(#{status}, #{prevBoardId})
+    </insert>
+
+    <select id="selectById" resultType="Board">
+        SELECT *
+        FROM board
+        WHERE boardId = #{boardId}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM board
+    </select>
+
+    <select id="selectFirstBoard" resultType="Board">
+        SELECT *
+        FROM board
+        WHERE prevBoardId = 0
+    </select>
+
+    <select id="selectByPrevBoardId" resultType="Board">
+        SELECT *
+        FROM board
+        WHERE prevBoardId = #{prevBoardId}
+    </select>
+
+    <select id="selectForPaging" parameterType="map" resultType="Board">
+        WITH RECURSIVE cte (boardId, status, prevBoardId) as (
+        SELECT boardId, status, prevBoardId
+        FROM board
+        WHERE prevBoardId = #{offset}
+        UNION ALL
+        SELECT b.boardId, b.status, b.prevBoardId
+        FROM board AS b
+        INNER JOIN cte ON b.prevBoardId = cte.boardId
+        )
+        SELECT * FROM cte LIMIT #{limit} OFFSET 0
+    </select>
+
+    <select id="selectStartLossPoint" resultType="Board">
+        SELECT *
+        FROM board
+        WHERE boardID NOT IN (SELECT prevBoardId FROM board)
+    </select>
+
+    <select id="selectEndLossPoint" resultType="Board">
+        SELECT *
+        FROM board
+        WHERE prevBoardId != 0 AND prevBoardId NOT IN (SELECT boardID FROM board)
+    </select>
+
+    <select id="countByRecursive" resultType="long">
+        WITH RECURSIVE cte ( boardId ) as (
+        SELECT boardId
+        FROM board
+        WHERE prevBoardId = 0
+        UNION ALL
+        SELECT c.boardId
+        FROM board AS c
+        INNER JOIN cte ON c.prevBoardId = cte.boardId
+        )
+        SELECT COUNT(*) FROM cte
+    </select>
+
+    <update id="updateStatus" parameterType="map">
+        UPDATE board
+        SET status = #{status}
+        WHERE boardId = #{boardId}
+    </update>
+
+    <update id="updatePrevBoardId" parameterType="map">
+        UPDATE board
+        SET prevBoardId = #{prevBoardId}
+        WHERE boardId = #{boardId}
+    </update>
+
+    <select id="dropTable">
+        DROP TABLE board
+    </select>
+
+    <delete id="deleteById" parameterType="long">
+        DELETE
+        FROM board
+        WHERE boardId = #{boardId}
+    </delete>
+
+    <delete id="deleteCardByBoardId" parameterType="long">
+        DELETE
+        FROM card
+        WHERE boardID = #{boardId}
+    </delete>
+
+    <select id="deleteBoardRecord">
+        DELETE FROM board
+    </select>
+
+</mapper>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.intern.kanban.history.dao.HistoryDao">
+
+    <select id="createTable">
+        create table if not exists logged_event (
+        eventId BIGINT NOT NULL Auto_increment primary key,
+        actionName varchar(100) NOT NULL,
+        modifiedEntity varchar(100) NOT NULL,
+        modifiedEntityId BIGINT NOT NULL,
+        nowEntityTitle varchar(100) NOT NULL,
+        modifiedColumn varchar(100) NOT NULL,
+        beforeData varchar(100),
+        afterData varchar(100) ,
+        modifiedTime datetime NOT NULL);
+    </select>
+
+    <insert id="insert" parameterType="LoggedEvent" useGeneratedKeys="true" keyProperty="eventId">
+        INSERT INTO logged_event ( actionName, modifiedEntity, modifiedEntityId,nowEntityTitle,
+        modifiedColumn,beforeData, afterData,
+        modifiedTime)
+        VALUES( #{actionName}, #{modifiedEntity}, #{modifiedEntityId},
+        #{nowEntityTitle},#{modifiedColumn},#{beforeData},
+        #{afterData},#{modifiedTime})
+    </insert>
+
+
+    <select id="selectForAdmin" resultType="LoggedEventForAdmin" parameterType="map">
+        SELECT *
+        FROM logged_event
+        LEFT JOIN move_info
+        ON loggedEventId = eventId
+        where actionName like #{actionName} and modifiedEntity like #{modifiedEntity}
+        ORDER BY modifiedTime DESC
+        LIMIT #{limit} OFFSET #{offset};
+    </select>
+
+    <select id="selectAllForClient" resultType="LoggedEventForClient" parameterType="map">
+        SELECT eventId, actionName,
+        modifiedEntity,nowEntityTitle,beforeData,afterData,modifiedTime,beforeBoardTitle,afterBoardTitle
+        FROM logged_event
+        LEFT JOIN move_info
+        ON loggedEventId = eventId
+        ORDER BY modifiedTime DESC
+        LIMIT #{limit} OFFSET #{offset};
+    </select>
+
+
+</mapper>
