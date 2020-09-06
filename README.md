@@ -15,8 +15,7 @@ $ npm install
 $ cd kanban frontend
 $ npm run dev
 ```
-kanban/src/main/java/com.intern.kanban/KanbanApplication.main() 실행 후
-http://localhost:3000/ 접속
+
 
 ### 개발환경
 -	Spring Boot 2.3.1
